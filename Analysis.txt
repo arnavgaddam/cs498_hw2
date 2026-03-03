@@ -1,0 +1,15 @@
+US register latency 68.13199349999195
+US list latency 160.8801524997034
+EU register latency 365.12365879971185
+EU list latency 939.1652911996061
+Ran 100 iterations and found 0 misses
+
+From the experiments, we can see that US latencies are much lower than EU latencies, as expected. That's a physics problem, where obviously the greater
+distance from my computer in Champaign has lower latency when making requests to a VM in the midwest as opposed to a VM somewhere in Europe. 
+The other pattern we see is that registration is much faster than listing, because of how firestore handles the operation. Since we provide a key
+for registration, firestore can simply write it without doing any further scans or queries. However, in the case of listing, firestore needs to 
+technically run a query. This results in increased latency over the register operation. 
+
+The other experiment shows that over 100 iterations of registering users to the US server and listing users from the EU server, we see no 
+misses. This shows us that firestore's consistency mechanism can actually keep up with what our script is throwing it. Technically there is no guarantee on consistency in this 
+case, but that doesn't mean that the system will necessarily have misses. Either our script or servers are too slow to really test the limits of firestore's consistency mechanism. 

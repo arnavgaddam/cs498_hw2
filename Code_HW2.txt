@@ -1,0 +1,54 @@
+The  python script runs two latency experiments on each server. One for /register and one for /list for each US and EU. 
+The code is simple, it just marks the time for each request and calculates a simple average. 
+
+import requests
+import time
+import uuid
+
+us_endpoint = "http://35.188.15.54:8080"
+eu_endpoint = "http://34.77.203.157:8080"
+
+def measure_list_latency(endpoint):
+    measurements = []
+    for i in range(10):
+        start = time.perf_counter()
+        requests.get(f"{endpoint}/list")
+        end = time.perf_counter() 
+        measurements.append(end - start)
+
+    return (sum(measurements) / len(measurements)) * 1000
+
+def measure_register_latency(endpoint):
+    measurements = []
+    for i in range(10):
+        start = time.perf_counter()
+        requests.post(f"{endpoint}/register", json={"username": "userA"})
+        end = time.perf_counter()
+        measurements.append(end - start)
+
+    return (sum(measurements) / len(measurements)) * 1000
+
+def main():
+    print("US register latency", measure_register_latency(us_endpoint))
+    print("US list latency", measure_list_latency(us_endpoint))
+
+    print("EU register latency", measure_register_latency(eu_endpoint))
+    print("EU list latency", measure_list_latency(eu_endpoint))
+
+
+    n = 100
+    misses = 0
+    for i in range(n):
+        # register on US then list on EU and check if misses
+        user = f"{str(uuid.uuid4())}"
+        requests.post(f"{us_endpoint}/register", json={"username": user})
+        response = requests.get(f"{eu_endpoint}/list")
+        data = response.json()
+        if user not in data.get("users", []):
+            misses += 1
+
+    print(f"Ran {n} iterations and found {misses} misses")
+
+
+if __name__ == "__main__":
+    main()
